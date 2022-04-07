@@ -19,7 +19,6 @@ const defaultOptions = {
   metricsApp: null,
   authenticate: null,
   collectDefaultMetrics: true,
-  collectGCMetrics: false,
   // buckets for response time from 0.05s to 2.5s
   // these are arbitrary values since i dont know any better ¯\_(ツ)_/¯
   requestDurationBuckets: Prometheus.exponentialBuckets(0.05, 1.75, 8),
@@ -112,21 +111,6 @@ module.exports = (userOptions = {}) => {
     Prometheus.collectDefaultMetrics({
       prefix: options.prefix
     })
-  }
-
-  if (options.collectGCMetrics) {
-    // if the option has been turned on, we start collecting garbage
-    // collector metrics too. using try/catch because the dependency is
-    // optional and it could not be installed
-    try {
-      const gcStats = require('prometheus-gc-stats')
-      const startGcStats = gcStats(Prometheus.register, {
-        prefix: options.prefix
-      })
-      startGcStats()
-    } catch (err) {
-      // the dependency has not been installed, skipping
-    }
   }
 
   app.use(redMiddleware)
