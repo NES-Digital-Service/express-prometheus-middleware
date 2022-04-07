@@ -31,8 +31,6 @@ npm install --save @nes-digital-service/express-prometheus-middleware
 
 | Name | Description | Default |
 | :-: | :- | :- |
-| metricsPath | URL route that will expose the metrics for scraping. | `/metrics` |
-| metricsApp  | Express app that will expose metrics endpoint, if an app is provided, use it, instead of instantiating a new one | `null` |
 | collectDefaultMetrics | Whether or not to collect `prom-client` default metrics. These metrics are usefull for collecting saturation metrics, for example.
   | `true` |
 | requestDurationBuckets | Buckets for the request duration metrics (in seconds) histogram | Uses `prom-client` utility:
