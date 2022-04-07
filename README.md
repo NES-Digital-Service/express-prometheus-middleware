@@ -29,21 +29,23 @@ npm install --save @nes-digital-service/express-prometheus-middleware
 
 ### Options
 
-| Name | Description | Default |
-| :-: | :- | :- |
-| collectDefaultMetrics | Whether or not to collect `prom-client` default metrics. These metrics are usefull for collecting saturation metrics, for example.
-  | `true` |
-| requestDurationBuckets | Buckets for the request duration metrics (in seconds) histogram | Uses `prom-client` utility:
-  `Prometheus.exponentialBuckets(0.05, 1.75, 8)` |
-| requestLengthBuckets | Buckets for the request length metrics (in bytes) histogram | no buckets (The request length metrics are not collected): `[]` |
-| responseLengthBuckets | Buckets for the response length metrics (in bytes) histogram | no buckets (The response length metrics are not collected) `[]` |
-| extraMasks | Optional, list of regexes to be used as argument to [url-value-parser](https://www.npmjs.com/package/url-value-parser), this will cause
-  extraroute params,  to be replaced with a `#val` placeholder.  | no extra masks: `[]` |
-| prefix | Optional prefix for the metrics name | no prefix added |
-| customLabels | Optional Array containing extra labels, used together with  `transformLabels` | no extra labels: `[]` |
-| transformLabels | Optional `function(labels, req, res)` adds to the labels object dynamic values for each label in `customLabels` | `null` |
-| normalizeStatus | Optional parameter to disable normalization of the status code. Example of normalized and non-normalized status code respectively: 4xx and
-  422.| true
+- `collectDefaultMetrics`: Whether or not to collect `prom-client` default metrics. These metrics are useful for collecting saturation metrics, for example.
+  Default is `true`.
+- `requestDurationBuckets`: Buckets for the request duration metrics (in seconds) histogram.
+  Default uses `prom-client` utility: `Prometheus.exponentialBuckets(0.05, 1.75, 8)`.
+- `requestLengthBuckets`: Buckets for the request length metrics (in bytes) histogram.
+  Default is no buckets (The request length metrics are not collected): `[]`.
+- `responseLengthBuckets`: Buckets for the response length metrics (in bytes) histogram.
+  Default is no buckets (The response length metrics are not collected) `[]`.
+- `extraMasks`: List of regexes to be used as argument to [url-value-parser](https://www.npmjs.com/package/url-value-parser), this will cause extra
+  route params,  to be replaced with a `#val` placeholder. Default is no extra masks: `[]`
+- `prefix`: Prefix for the metrics name. Default no prefix added.
+- `customLabels`: Array containing extra labels, used together with `transformLabels`.
+  Default is no extra labels: `[]`.
+- `transformLabels`: `function(labels, req, res)` adds to the labels object dynamic values for each label in `customLabels`. Default is `null`.
+- `normalizeStatus`: Optional parameter to disable normalization of the status code. Example of normalized and non-normalized status code respectively: 4xx and
+  422. Default is `true`.
+
 ### Example
 
 ```js
