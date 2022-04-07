@@ -1,21 +1,28 @@
 # Express Prometheus Middleware
 
-[![npm](https://img.shields.io/npm/v/express-prometheus-middleware.svg)](https://www.npmjs.com/package/express-prometheus-middleware)
-[![Dependency Status](https://david-dm.org/joao-fontenele/express-prometheus-middleware.svg)](https://david-dm.org/joao-fontenele/express-prometheus-middleware)
-[![devDependency Status](https://david-dm.org/joao-fontenele/express-prometheus-middleware/dev-status.svg)](https://david-dm.org/joao-fontenele/express-prometheus-middleware#info=devDependencies)
-[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
-[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/express-prometheus-middleware/community)
+A ready to use RED/USE prometheus metrics middleware for express applications.
 
-This is a middleware for express servers, that expose metrics for prometheus.
+The metrics exposed allows the calculation common RED (Request, Error rate, Duration of requests), and USE (Utilisation, Error rate, and Saturation), metrics
 
-The metrics exposed allows to calculate common RED (Request, Error rate, Duration of requests), and USE (Utilisation, Error rate, and Saturation), metrics
+This is a fork of the original [express-prometheus-middleware by Joao Fontenele](https://github.com/joao-fontenele/express-prometheus-middleware) which is no
+longer maintained.
 
 ## Install
 
+Configure npm with the NES Digital Service GitHub packages repository:
+
+```shell
+echo "@nes-digital-service:registry=https://npm.pkg.github.com" > .npmrc
+echo "//npm.pkg.github.com/:_authToken=<PERSONAL ACCESS TOKEN>" >> .npmrc
+```
+
+If you do not have a GitHub personal access token then generate one from your [GitHub Developer Settings](https://github.com/settings/tokens).
+To install this package the personal access token must have the `read:packages` scope.
+
+Install the module with npm:
+
 ``` bash
-yarn add express-prometheus-middleware
-# or
-npm i --save express-prometheus-middleware
+npm install --save @nes-digital-service/express-prometheus-middleware
 ```
 
 ## Usage
@@ -24,19 +31,25 @@ npm i --save express-prometheus-middleware
 
 | Name | Description | Default |
 | :-: | :- | :- |
-| metricsPath | Url route that will expose the metrics for scraping. | `/metrics` |
+| metricsPath | URL route that will expose the metrics for scraping. | `/metrics` |
 | metricsApp  | Express app that will expose metrics endpoint, if an app is provided, use it, instead of instantiating a new one | `null` |
-| collectDefaultMetrics | Whether or not to collect `prom-client` default metrics. These metrics are usefull for collecting saturation metrics, for example. | `true` |
-| collectGCMetrics | Whether or not to collect garbage collection metrics via module `prometheus-gc-stats`. Dependency `prometheus-gc-stats` is marked as optional, hence if this option is set to `true` but npm/yarn could not install the dependency, no garbage collection metric will be collected. | `false` |
-| requestDurationBuckets | Buckets for the request duration metrics (in seconds) histogram | Uses `prom-client` utility: `Prometheus.exponentialBuckets(0.05, 1.75, 8)` |
+| collectDefaultMetrics | Whether or not to collect `prom-client` default metrics. These metrics are usefull for collecting saturation metrics, for example.
+  | `true` |
+| collectGCMetrics | Whether or not to collect garbage collection metrics via module `prometheus-gc-stats`. Dependency `prometheus-gc-stats` is marked as
+  optional, hence if this option is set to `true` but npm/yarn could not install the dependency, no garbage collection metric will be collected. | `false` |
+| requestDurationBuckets | Buckets for the request duration metrics (in seconds) histogram | Uses `prom-client` utility:
+  `Prometheus.exponentialBuckets(0.05, 1.75, 8)` |
 | requestLengthBuckets | Buckets for the request length metrics (in bytes) histogram | no buckets (The request length metrics are not collected): `[]` |
 | responseLengthBuckets | Buckets for the response length metrics (in bytes) histogram | no buckets (The response length metrics are not collected) `[]` |
-| extraMasks | Optional, list of regexes to be used as argument to [url-value-parser](https://www.npmjs.com/package/url-value-parser), this will cause extra route params,  to be replaced with a `#val` placeholder.  | no extra masks: `[]` |
-| authenticate | Optional authentication callback, the function should receive as argument, the `req` object and return truthy for sucessfull authentication, or falsy, otherwise. This option supports Promise results. | `null` |
+| extraMasks | Optional, list of regexes to be used as argument to [url-value-parser](https://www.npmjs.com/package/url-value-parser), this will cause
+  extraroute params,  to be replaced with a `#val` placeholder.  | no extra masks: `[]` |
+| authenticate | Optional authentication callback, the function should receive as argument, the `req` object and return truthy for sucessfull authentication,
+  or falsy, otherwise. This option supports Promise results. | `null` |
 | prefix | Optional prefix for the metrics name | no prefix added |
 | customLabels | Optional Array containing extra labels, used together with  `transformLabels` | no extra labels: `[]` |
 | transformLabels | Optional `function(labels, req, res)` adds to the labels object dynamic values for each label in `customLabels` | `null` |
-| normalizeStatus | Optional parameter to disable normalization of the status code. Example of normalized and non-normalized status code respectively: 4xx and 422.| true
+| normalizeStatus | Optional parameter to disable normalization of the status code. Example of normalized and non-normalized status code respectively: 4xx and
+  422.| true
 ### Example
 
 ```js
@@ -99,7 +112,7 @@ app.listen(PORT, () => {
 
 The labels `route` and `status` are normalized:
 
-- `route`: will normalize id like route params
+- `route`: will normalize ID like route params
 - `status`: will normalize to status code family groups, like `2XX` or `4XX`.
 
 ### Example prometheus queries
