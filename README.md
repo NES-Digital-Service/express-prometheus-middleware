@@ -41,8 +41,6 @@ npm install --save @nes-digital-service/express-prometheus-middleware
 | responseLengthBuckets | Buckets for the response length metrics (in bytes) histogram | no buckets (The response length metrics are not collected) `[]` |
 | extraMasks | Optional, list of regexes to be used as argument to [url-value-parser](https://www.npmjs.com/package/url-value-parser), this will cause
   extraroute params,  to be replaced with a `#val` placeholder.  | no extra masks: `[]` |
-| authenticate | Optional authentication callback, the function should receive as argument, the `req` object and return truthy for sucessfull authentication,
-  or falsy, otherwise. This option supports Promise results. | `null` |
 | prefix | Optional prefix for the metrics name | no prefix added |
 | customLabels | Optional Array containing extra labels, used together with  `transformLabels` | no extra labels: `[]` |
 | transformLabels | Optional `function(labels, req, res)` adds to the labels object dynamic values for each label in `customLabels` | `null` |

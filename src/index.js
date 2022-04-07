@@ -17,7 +17,6 @@ const {
 const defaultOptions = {
   metricsPath: '/metrics',
   metricsApp: null,
-  authenticate: null,
   collectDefaultMetrics: true,
   // buckets for response time from 0.05s to 2.5s
   // these are arbitrary values since i dont know any better ¯\_(ツ)_/¯
@@ -120,21 +119,6 @@ module.exports = (userOptions = {}) => {
    */
   const routeApp = metricsApp || app
   routeApp.get(metricsPath, async (req, res, next) => {
-    if (typeof options.authenticate === 'function') {
-      let result = null
-      try {
-        result = await options.authenticate(req)
-      } catch (err) {
-        // treat errors as failures to authenticate
-      }
-
-      // the requester failed to authenticate, then return next, so we don't
-      // hint at the existance of this route
-      if (!result) {
-        return next()
-      }
-    }
-
     res.set('Content-Type', Prometheus.register.contentType)
     return res.end(await Prometheus.register.metrics())
   })
