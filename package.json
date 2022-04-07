@@ -11,6 +11,6 @@
     "url-value-parser": "^2.0.0"
   },
   "peerDependencies": {
-    "prom-client": ">= 10.x <= 13.x"
+    "prom-client": "^14.0.0"
   }
 }
