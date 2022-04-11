@@ -32,7 +32,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   unit-test:
-    if: ${{ false }}  # disable until we have tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

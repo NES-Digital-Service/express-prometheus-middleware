@@ -169,3 +169,21 @@ rate(process_cpu_user_seconds_total{app="myapp"}[5m])
 nodejs_heap_size_total_bytes{app="myapp"}
 nodejs_heap_size_used_bytes{app="myapp"}
 ```
+
+## For Maintainers
+
+### Testing
+
+This library comes with a suite of unit tests. To execute the unit tests:
+
+```shell
+npm test
+```
+
+### Publishing
+
+This package will be published to GitHub Packages when a release is performed.
+The package version number will be the same as the release tag.
+
+Note: The workflows depend on the PACKAGES_TOKEN Organization Secret, which expires every 90 days, if it does create a Personal Access Token with the
+`read:packages` scope and update the secret.
