@@ -1,15 +1,15 @@
-const Prometheus = require('prom-client');
+const Prometheus = require('prom-client')
 
 /**
  * @param prefix - metrics name prefix
  * request counter
  */
-function requestCountGenerator(labelNames, prefix = '') {
+function requestCountGenerator (labelNames, prefix = '') {
   return new Prometheus.Counter({
     name: `${prefix}http_requests_total`,
     help: 'Counter for total requests received',
-    labelNames,
-  });
+    labelNames
+  })
 }
 
 /**
@@ -17,13 +17,13 @@ function requestCountGenerator(labelNames, prefix = '') {
  * @param prefix - metrics name prefix
  * request duration
  */
-function requestDurationGenerator(labelNames, buckets, prefix = '') {
+function requestDurationGenerator (labelNames, buckets, prefix = '') {
   return new Prometheus.Histogram({
     name: `${prefix}http_request_duration_seconds`,
     help: 'Duration of HTTP requests in seconds',
     labelNames,
-    buckets,
-  });
+    buckets
+  })
 }
 
 /**
@@ -31,13 +31,13 @@ function requestDurationGenerator(labelNames, buckets, prefix = '') {
  * @param prefix - metrics name prefix
  * request length
  */
-function requestLengthGenerator(labelNames, buckets, prefix = '') {
+function requestLengthGenerator (labelNames, buckets, prefix = '') {
   return new Prometheus.Histogram({
     name: `${prefix}http_request_length_bytes`,
     help: 'Content-Length of HTTP request',
     labelNames,
-    buckets,
-  });
+    buckets
+  })
 }
 
 /**
@@ -45,18 +45,18 @@ function requestLengthGenerator(labelNames, buckets, prefix = '') {
  * @param prefix - metrics name prefix
  * response length
  */
-function responseLengthGenerator(labelNames, buckets, prefix = '') {
+function responseLengthGenerator (labelNames, buckets, prefix = '') {
   return new Prometheus.Histogram({
     name: `${prefix}http_response_length_bytes`,
     help: 'Content-Length of HTTP response',
     labelNames,
-    buckets,
-  });
+    buckets
+  })
 }
 
 module.exports = {
   requestCountGenerator,
   requestDurationGenerator,
   requestLengthGenerator,
-  responseLengthGenerator,
-};
+  responseLengthGenerator
+}

@@ -1,93 +1,91 @@
 # Express Prometheus Middleware
 
-[![npm](https://img.shields.io/npm/v/express-prometheus-middleware.svg)](https://www.npmjs.com/package/express-prometheus-middleware)
-[![Dependency Status](https://david-dm.org/joao-fontenele/express-prometheus-middleware.svg)](https://david-dm.org/joao-fontenele/express-prometheus-middleware)
-[![devDependency Status](https://david-dm.org/joao-fontenele/express-prometheus-middleware/dev-status.svg)](https://david-dm.org/joao-fontenele/express-prometheus-middleware#info=devDependencies)
-[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
-[![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/express-prometheus-middleware/community)
+A ready to use RED/USE prometheus metrics middleware for express applications.
 
-This is a middleware for express servers, that expose metrics for prometheus.
+The metrics exposed allows the calculation common RED (Request, Error rate, Duration of requests), and USE (Utilisation, Error rate, and Saturation), metrics
 
-The metrics exposed allows to calculate common RED (Request, Error rate, Duration of requests), and USE (Utilisation, Error rate, and Saturation), metrics
+This is a fork of the original [express-prometheus-middleware by Joao Fontenele](https://github.com/joao-fontenele/express-prometheus-middleware) which is no
+longer maintained.
 
 ## Install
 
+Configure npm with the NES Digital Service GitHub packages repository:
+
+```shell
+echo "@nes-digital-service:registry=https://npm.pkg.github.com" > .npmrc
+echo "//npm.pkg.github.com/:_authToken=<PERSONAL ACCESS TOKEN>" >> .npmrc
+```
+
+If you do not have a GitHub personal access token then generate one from your [GitHub Developer Settings](https://github.com/settings/tokens).
+To install this package the personal access token must have the `read:packages` scope.
+
+Install the module with npm:
+
 ``` bash
-yarn add express-prometheus-middleware
-# or
-npm i --save express-prometheus-middleware
+npm install --save @nes-digital-service/express-prometheus-middleware
 ```
 
 ## Usage
 
 ### Options
 
-| Name | Description | Default |
-| :-: | :- | :- |
-| metricsPath | Url route that will expose the metrics for scraping. | `/metrics` |
-| metricsApp  | Express app that will expose metrics endpoint, if an app is provided, use it, instead of instantiating a new one | `null` |
-| collectDefaultMetrics | Whether or not to collect `prom-client` default metrics. These metrics are usefull for collecting saturation metrics, for example. | `true` |
-| collectGCMetrics | Whether or not to collect garbage collection metrics via module `prometheus-gc-stats`. Dependency `prometheus-gc-stats` is marked as optional, hence if this option is set to `true` but npm/yarn could not install the dependency, no garbage collection metric will be collected. | `false` |
-| requestDurationBuckets | Buckets for the request duration metrics (in seconds) histogram | Uses `prom-client` utility: `Prometheus.exponentialBuckets(0.05, 1.75, 8)` |
-| requestLengthBuckets | Buckets for the request length metrics (in bytes) histogram | no buckets (The request length metrics are not collected): `[]` |
-| responseLengthBuckets | Buckets for the response length metrics (in bytes) histogram | no buckets (The response length metrics are not collected) `[]` |
-| extraMasks | Optional, list of regexes to be used as argument to [url-value-parser](https://www.npmjs.com/package/url-value-parser), this will cause extra route params,  to be replaced with a `#val` placeholder.  | no extra masks: `[]` |
-| authenticate | Optional authentication callback, the function should receive as argument, the `req` object and return truthy for sucessfull authentication, or falsy, otherwise. This option supports Promise results. | `null` |
-| prefix | Optional prefix for the metrics name | no prefix added |
-| customLabels | Optional Array containing extra labels, used together with  `transformLabels` | no extra labels: `[]` |
-| transformLabels | Optional `function(labels, req, res)` adds to the labels object dynamic values for each label in `customLabels` | `null` |
-| normalizeStatus | Optional parameter to disable normalization of the status code. Example of normalized and non-normalized status code respectively: 4xx and 422.| true
+- `collectDefaultMetrics`: Whether or not to collect `prom-client` default metrics. These metrics are useful for collecting saturation metrics, for example.
+  Default is `true`.
+- `requestDurationBuckets`: Buckets for the request duration metrics (in seconds) histogram.
+  Default uses `prom-client` utility: `Prometheus.exponentialBuckets(0.05, 1.75, 8)`.
+- `requestLengthBuckets`: Buckets for the request length metrics (in bytes) histogram.
+  Default is no buckets (The request length metrics are not collected): `[]`.
+- `responseLengthBuckets`: Buckets for the response length metrics (in bytes) histogram.
+  Default is no buckets (The response length metrics are not collected) `[]`.
+- `extraMasks`: List of regexes to be used as argument to [url-value-parser](https://www.npmjs.com/package/url-value-parser), this will cause extra
+  route params,  to be replaced with a `#val` placeholder. Default is no extra masks: `[]`
+- `prefix`: Prefix for the metrics name. Default no prefix added.
+- `customLabels`: Array containing extra labels, used together with `transformLabels`.
+  Default is no extra labels: `[]`.
+- `transformLabels`: `function(labels, req, res)` adds to the labels object dynamic values for each label in `customLabels`. Default is `null`.
+- `normalizeStatus`: Optional parameter to disable normalization of the status code. Example of normalized and non-normalized status code respectively: 4xx and
+  422. Default is `true`.
+
 ### Example
 
 ```js
-const express = require('express');
-const promMid = require('express-prometheus-middleware');
-const app = express();
+const express = require('express')
+const promMid = require('express-prometheus-middleware')
+const promClient = require('prom-client')
 
-const PORT = 9091;
+const API_PORT = 8080
+const TELEMETRY_PORT = 9090
+
+const app = express()
 app.use(promMid({
-  metricsPath: '/metrics',
   collectDefaultMetrics: true,
   requestDurationBuckets: [0.1, 0.5, 1, 1.5],
   requestLengthBuckets: [512, 1024, 5120, 10240, 51200, 102400],
   responseLengthBuckets: [512, 1024, 5120, 10240, 51200, 102400],
-  /**
-   * Uncomenting the `authenticate` callback will make the `metricsPath` route
-   * require authentication. This authentication callback can make a simple
-   * basic auth test, or even query a remote server to validate access.
-   * To access /metrics you could do:
-   * curl -X GET user:password@localhost:9091/metrics
-   */
-  // authenticate: req => req.headers.authorization === 'Basic dXNlcjpwYXNzd29yZA==',
-  /**
-   * Uncommenting the `extraMasks` config will use the list of regexes to
-   * reformat URL path names and replace the values found with a placeholder value
-  */
-  // extraMasks: [/..:..:..:..:..:../],
-  /**
-   * The prefix option will cause all metrics to have the given prefix.
-   * E.g.: `app_prefix_http_requests_total`
-   */
-  // prefix: 'app_prefix_',
-  /**
-   * Can add custom labels with customLabels and transformLabels options
-   */
-  // customLabels: ['contentType'],
-  // transformLabels(labels, req) {
-  //   // eslint-disable-next-line no-param-reassign
-  //   labels.contentType = req.headers['content-type'];
-  // },
 }));
 
-// curl -X GET localhost:9091/hello?name=Chuck%20Norris
+// curl -X GET localhost:8080/hello?name=Chuck%20Norris
 app.get('/hello', (req, res) => {
-  console.log('GET /hello');
-  const { name = 'Anon' } = req.query;
-  res.json({ message: `Hello, ${name}!` });
+  console.log('GET /hello')
+  const { name = 'Anon' } = req.query
+  res.json({ message: `Hello, ${name}!` })
 });
 
-app.listen(PORT, () => {
-  console.log(`Example api is listening on http://localhost:${PORT}`);
+app.listen(API_PORT, () => {
+  console.log(`Example api is listening on http://localhost:${API_PORT}/hello`);
+});
+
+const telemetry = express()
+
+// curl -X GET localhost:9090/metrics
+telemetry.get('/metrics', async (req, res) => {
+  console.log('GET /metrics')
+  res.set('Content-Type', promClient.register.contentType)
+  res.end(await promClient.register.metrics())
+})
+
+telemetry.listen(TELEMETRY_PORT, () => {
+  console.log(`Telemetry is listening on http://localhost:${TELEMETRY_PORT}/metrics`);
 });
 ```
 
@@ -99,7 +97,7 @@ app.listen(PORT, () => {
 
 The labels `route` and `status` are normalized:
 
-- `route`: will normalize id like route params
+- `route`: will normalize ID like route params
 - `status`: will normalize to status code family groups, like `2XX` or `4XX`.
 
 ### Example prometheus queries
@@ -171,3 +169,21 @@ rate(process_cpu_user_seconds_total{app="myapp"}[5m])
 nodejs_heap_size_total_bytes{app="myapp"}
 nodejs_heap_size_used_bytes{app="myapp"}
 ```
+
+## For Maintainers
+
+### Testing
+
+This library comes with a suite of unit tests. To execute the unit tests:
+
+```shell
+npm test
+```
+
+### Publishing
+
+This package will be published to GitHub Packages when a release is performed.
+The package version number will be the same as the release tag.
+
+Note: The workflows depend on the PACKAGES_TOKEN Organization Secret, which expires every 90 days, if it does create a Personal Access Token with the
+`read:packages` scope and update the secret.
