@@ -2,11 +2,19 @@
   "name": "@nes-digital-service/express-prometheus-middleware",
   "description": "RED/USE metrics middleware for express applications",
   "repository": "github:NES-Digital-Service/express-prometheus-middleware",
-  "main": "src/index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "!dist/**/**.test.**"
+  ],
   "license": "MIT",
   "private": false,
   "scripts": {
-    "test": "jest --coverage"
+    "test": "jest --coverage",
+    "build": "tsc",
+    "prepublish": "npm run build"
   },
   "dependencies": {
     "response-time": "^2.3.2",
@@ -16,13 +24,27 @@
     "prom-client": "^14.0.0"
   },
   "devDependencies": {
-    "jest": "^27.0.0"
+    "@types/express": "^4.17.17",
+    "@types/jest": "^29.5.0",
+    "@types/node": "^18.15.11",
+    "@types/response-time": "^2.3.5",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.0.2"
   },
-  "standard": {
+  "ts-standard": {
+    "project": "tsconfig.json",
     "env": [
       "jest"
     ]
-  },"jest": {
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "transform": {
+      "^.+\\.ts?$": "ts-jest"
+    },
+    "testRegex": "./*.test.ts",
     "coverageThreshold": {
       "global": {
         "statements": 100,

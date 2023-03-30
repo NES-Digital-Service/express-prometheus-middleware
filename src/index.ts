@@ -1,19 +1,38 @@
-const Prometheus = require('prom-client')
-const ResponseTime = require('response-time')
+import Prometheus from 'prom-client'
+import responseTime from 'response-time'
+import { Request, Response } from 'express'
 
-const {
+import {
   requestCountGenerator,
   requestDurationGenerator,
   requestLengthGenerator,
   responseLengthGenerator
-} = require('./metrics')
+} from './metrics'
 
-const {
+import {
   normalizeStatusCode,
   normalizePath
-} = require('./normalizers')
+} from './normalizers'
 
-const defaultOptions = {
+interface Label {
+  route: string
+  method: string
+  status: string
+}
+
+interface Options {
+  collectDefaultMetrics: boolean
+  requestDurationBuckets: number[]
+  requestLengthBuckets: number[]
+  responseLengthBuckets: number[]
+  extraMasks: string[]
+  customLabels: string[]
+  transformLabels: (labels: Label, req: Request, res: Response<Request>) => void
+  normalizeStatus: boolean
+  prefix: string
+}
+
+const defaultOptions: Options = {
   collectDefaultMetrics: true,
   // buckets for response time from 0.05s to 2.5s
   // these are arbitrary values since i dont know any better ¯\_(ツ)_/¯
@@ -22,15 +41,15 @@ const defaultOptions = {
   responseLengthBuckets: [],
   extraMasks: [],
   customLabels: [],
-  transformLabels: null,
-  normalizeStatus: true
+  transformLabels: (_labels, _req, _res) => {},
+  normalizeStatus: true,
+  prefix: ''
 }
 
-module.exports = (userOptions = {}) => {
-  const options = { ...defaultOptions, ...userOptions }
+export = (userOptions: Object = defaultOptions) => {
+  const options: Options = { ...defaultOptions, ...userOptions }
   const originalLabels = ['route', 'method', 'status']
-  options.customLabels = new Set([...originalLabels, ...options.customLabels])
-  options.customLabels = [...options.customLabels]
+  options.customLabels = Array.from(new Set([...originalLabels, ...options.customLabels]))
 
   const requestDuration = requestDurationGenerator(
     options.customLabels,
@@ -56,7 +75,7 @@ module.exports = (userOptions = {}) => {
    * Corresponds to the R(equest rate), E(error rate), and D(uration of requests),
    * of the RED metrics.
    */
-  const redMiddleware = ResponseTime((req, res, time) => {
+  const redMiddleware = responseTime((req: Request, res: Response<Request>, time: number) => {
     const { originalUrl, method } = req
     // will replace ids from the route with `#val` placeholder this serves to
     // measure the same routes, e.g., /image/id1, and /image/id2, will be
@@ -69,26 +88,25 @@ module.exports = (userOptions = {}) => {
 
     const labels = { route, method, status }
 
-    if (typeof options.transformLabels === 'function') {
-      options.transformLabels(labels, req, res)
-    }
+    options.transformLabels(labels, req, res)
+
     requestCount.inc(labels)
 
     // observe normalizing to seconds
     requestDuration.observe(labels, time / 1000)
 
     // observe request length
-    if (options.requestLengthBuckets.length) {
+    if (options.requestLengthBuckets.length > 0) {
       const reqLength = req.get('Content-Length')
-      if (reqLength) {
+      if (reqLength != null && reqLength !== '0') {
         requestLength.observe(labels, Number(reqLength))
       }
     }
 
     // observe response length
-    if (options.responseLengthBuckets.length) {
+    if (options.responseLengthBuckets.length > 0) {
       const resLength = res.get('Content-Length')
-      if (resLength) {
+      if (resLength != null && resLength !== '0') {
         responseLength.observe(labels, Number(resLength))
       }
     }

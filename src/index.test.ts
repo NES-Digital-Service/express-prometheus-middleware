@@ -1,56 +1,70 @@
-const proMid = require('./index')
-const prometheus = require('prom-client')
-const { normalizePath, normalizeStatusCode } = require('./normalizers')
-const {
+import proMid from './index'
+
+import prometheus, { Counter, Histogram } from 'prom-client'
+import { Request, Response } from 'express'
+
+import { normalizeStatusCode } from './normalizers'
+import {
   requestCountGenerator,
   requestDurationGenerator,
   requestLengthGenerator,
   responseLengthGenerator
-} = require('./metrics')
+} from './metrics'
 
-jest.mock('./normalizers')
+jest.mock('./normalizers', () => ({
+  normalizePath: jest.fn().mockImplementation((path) => path),
+  normalizeStatusCode: jest.fn().mockImplementation((statusCode) => statusCode)
+}))
 jest.mock('./metrics')
 jest.mock('prom-client')
 
-const createMockCounter = function () {
+function createMockCounter (): jest.Mocked<Counter<string>> {
   return {
-    inc: jest.fn()
+    inc: jest.fn(),
+    labels: jest.fn(),
+    reset: jest.fn(),
+    remove: jest.fn()
   }
 }
 
-const createMockHistogram = function () {
+function createMockHistogram (): jest.Mocked<Histogram<string>> {
   return {
-    observe: jest.fn()
+    observe: jest.fn(),
+    startTimer: jest.fn(),
+    labels: jest.fn(),
+    reset: jest.fn(),
+    remove: jest.fn(),
+    zero: jest.fn()
   }
+}
+
+const req = {
+  originalUrl: '/foo',
+  method: 'POST',
+  get: jest.fn()
+} as unknown as Request
+const contentLength = 123
+const res = {
+  get: jest.fn(),
+  writeHead: jest.fn()
+} as unknown as Response
+const status = 200
+const next = function (): void {
+  res.writeHead(status)
 }
 
 describe('index', () => {
-  const req = {
-    originalUrl: '/foo',
-    method: 'POST',
-    get: jest.fn()
-  }
-  const contentLength = 123
-  const res = {
-    get: jest.fn(),
-    writeHead: jest.fn()
-  }
-  const status = '200'
-  const next = function () {
-    res.writeHead(status)
-  }
-  const requestCount = createMockCounter()
-  const requestDuration = createMockHistogram()
+  const mockCounter = createMockCounter()
+  const mockRequestDuration = createMockHistogram()
+  const mockRequestLengthDuration = createMockHistogram()
+  const mockResponseLenghtDuration = createMockHistogram()
 
   beforeEach(() => {
-    normalizePath.mockImplementation((path) => path)
-    normalizeStatusCode.mockImplementation((statusCode) => statusCode)
-    requestCountGenerator.mockReturnValue(requestCount)
-    requestDurationGenerator.mockReturnValue(requestDuration)
-  })
-
-  afterEach(() => {
-    jest.resetAllMocks()
+    jest.clearAllMocks()
+    jest.mocked(requestCountGenerator).mockReturnValue(mockCounter)
+    jest.mocked(requestDurationGenerator).mockReturnValue(mockRequestDuration)
+    jest.mocked(requestLengthGenerator).mockReturnValue(mockRequestLengthDuration)
+    jest.mocked(responseLengthGenerator).mockReturnValue(mockResponseLenghtDuration)
   })
 
   it('should count request', () => {
@@ -61,11 +75,11 @@ describe('index', () => {
     middleware(req, res, next)
 
     // Then
-    expect(requestCount.inc).toHaveBeenCalledTimes(1)
-    expect(requestCount.inc.mock.calls[0][0]).toEqual({
+    expect(mockCounter.inc).toHaveBeenCalledTimes(1)
+    expect(mockCounter.inc).toHaveBeenCalledWith({
       route: req.originalUrl,
       method: req.method,
-      status: status
+      status
     })
   })
 
@@ -77,79 +91,70 @@ describe('index', () => {
     middleware(req, res, next)
 
     // Then
-    expect(requestDuration.observe).toHaveBeenCalledTimes(1)
-    expect(requestDuration.observe.mock.calls[0][0]).toEqual({
+    expect(mockRequestDuration.observe).toHaveBeenCalledTimes(1)
+    expect(mockRequestDuration.observe.mock.calls[0][0]).toEqual({
       route: req.originalUrl,
       method: req.method,
-      status: status
+      status
     })
-    expect(requestDuration.observe.mock.calls[0][1]).toBeGreaterThan(0)
+    expect(mockRequestDuration.observe.mock.calls[0][1]).toBeGreaterThan(0)
   })
 
   it('should record request length if request content', () => {
     // Given
-    req.get.mockReturnValue(contentLength)
-    const requestLength = createMockHistogram()
-    requestLengthGenerator.mockReturnValue(requestLength)
+    jest.mocked(req.get).mockReturnValueOnce(String(contentLength))
     const middleware = proMid({ requestLengthBuckets: [0.1, 0.5, 1] })
 
     // When
     middleware(req, res, next)
 
     // Then
-    expect(requestLength.observe).toHaveBeenCalledTimes(1)
-    expect(requestLength.observe.mock.calls[0][0]).toEqual({
+    expect(mockRequestLengthDuration.observe).toHaveBeenCalledTimes(1)
+    expect(mockRequestLengthDuration.observe).toHaveBeenCalledWith({
       route: req.originalUrl,
       method: req.method,
-      status: status
-    })
-    expect(requestLength.observe.mock.calls[0][1]).toEqual(contentLength)
+      status
+    }, contentLength)
   })
 
   it('should not record request length if no request content', () => {
     // Given
-    const requestLength = createMockHistogram()
-    requestLengthGenerator.mockReturnValue(requestLength)
     const middleware = proMid({ requestLengthBuckets: [0.1, 0.5, 1] })
 
     // When
     middleware(req, res, next)
 
     // Then
-    expect(requestLength.observe).not.toHaveBeenCalled()
+    expect(mockRequestLengthDuration.observe).not.toHaveBeenCalled()
   })
 
   it('should record response length if response content', () => {
     // Given
-    res.get.mockReturnValue(contentLength)
-    const responseLength = createMockHistogram()
-    responseLengthGenerator.mockReturnValue(responseLength)
+    jest.mocked(res.get).mockReturnValueOnce(String(contentLength))
+
     const middleware = proMid({ responseLengthBuckets: [0.1, 0.5, 1] })
 
     // When
     middleware(req, res, next)
 
     // Then
-    expect(responseLength.observe).toHaveBeenCalledTimes(1)
-    expect(responseLength.observe.mock.calls[0][0]).toEqual({
+    expect(mockResponseLenghtDuration.observe).toHaveBeenCalledTimes(1)
+    expect(mockResponseLenghtDuration.observe).toHaveBeenCalledWith({
       route: req.originalUrl,
       method: req.method,
-      status: status
-    })
-    expect(responseLength.observe.mock.calls[0][1]).toEqual(contentLength)
+      status
+    }, contentLength)
   })
 
   it('should not record response length if no response content', () => {
     // Given
-    const responseLength = createMockHistogram()
-    responseLengthGenerator.mockReturnValue(responseLength)
     const middleware = proMid({ responseLengthBuckets: [0.1, 0.5, 1] })
 
     // When
     middleware(req, res, next)
 
     // Then
-    expect(responseLength.observe).not.toHaveBeenCalled()
+    expect(mockResponseLenghtDuration.observe).not.toHaveBeenCalled()
   })
 
   it('should collect default metrics with prefix', () => {
@@ -182,7 +187,7 @@ describe('index', () => {
     expect(options.transformLabels).toHaveBeenCalledWith({
       route: req.originalUrl,
       method: req.method,
-      status: status
+      status
     }, req, res)
   })
 

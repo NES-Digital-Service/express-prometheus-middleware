@@ -1,4 +1,4 @@
-const { normalizePath, normalizeStatusCode } = require('./normalizers')
+import { normalizePath, normalizeStatusCode } from './normalizers'
 
 describe('normalizers', () => {
   describe('normalizePath', () => {

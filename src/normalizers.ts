@@ -1,25 +1,21 @@
-const UrlValueParser = require('url-value-parser')
+import UrlValueParser from 'url-value-parser'
 
 /**
  * Normalizes urls paths.
  *
- * This function replaces route params like ids, with a placeholder, so we can
- * set the metrics label, correctly. E.g., both routes
+ * This function replaces route params like ids, with a placeholder, so we can set the metrics label, correctly. E.g., both routes
  *
  * - /api/v1/user/1
  * - /api/v1/user/2
  *
- * represents the same logical route, and we want to group them together,
- * hence the need for the normalization.
+ * represents the same logical route, and we want to group them together, hence the need for the normalization.
  *
  * @param {!string} originalUrl - url path.
- * @param {Array} extraMasks - array of regexps which will replace
- * values in the URL.
- * @param {string} [placeholder='#val'] - the placeholder that will replace id
- * like params in the url path.
+ * @param {Array} extraMasks - array of regexps which will replace values in the URL.
+ * @param {string} [placeholder='#val'] - the placeholder that will replace id like params in the url path.
  * @returns {string} a normalized path, without ids.
  */
-function normalizePath (originalUrl, extraMasks = [], placeholder = '#val') {
+function normalizePath (originalUrl: string, extraMasks: string[] = [], placeholder: string = '#val'): string {
   const { pathname } = new URL(originalUrl, 'http://localhost')
   const urlParser = new UrlValueParser({ extraMasks })
   return urlParser.replacePathValues(pathname, placeholder)
@@ -33,7 +29,7 @@ function normalizePath (originalUrl, extraMasks = [], placeholder = '#val') {
  * @param {!number} status - status code of the requests
  * @returns {string} the normalized status code.
  */
-function normalizeStatusCode (status) {
+function normalizeStatusCode (status: number): string {
   if (status >= 200 && status < 300) {
     return '2XX'
   }
@@ -49,7 +45,7 @@ function normalizeStatusCode (status) {
   return '5XX'
 }
 
-module.exports = {
+export {
   normalizePath,
   normalizeStatusCode
 }
