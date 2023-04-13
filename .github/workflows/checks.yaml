@@ -30,6 +30,7 @@ jobs:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TYPESCRIPT_STANDARD_TSCONFIG_FILE: './../../tsconfig.json'
 
   unit-test:
     runs-on: ubuntu-latest
