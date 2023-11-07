@@ -1,6 +1,6 @@
 import Prometheus from 'prom-client'
 import responseTime from 'response-time'
-import { Request, Response } from 'express'
+import { Request, Response, RequestHandler } from 'express'
 
 import {
   requestCountGenerator,
@@ -14,13 +14,14 @@ import {
   normalizePath
 } from './normalizers'
 
-interface Label {
+export interface Label {
   route: string
   method: string
   status: string
+  [k: string]: string | undefined
 }
 
-interface Options {
+export interface Options {
   collectDefaultMetrics: boolean
   requestDurationBuckets: number[]
   requestLengthBuckets: number[]
@@ -46,27 +47,27 @@ const defaultOptions: Options = {
   prefix: ''
 }
 
-export = (userOptions: Object = defaultOptions) => {
+export default function metricsCollector (userOptions: Partial<Options> = defaultOptions): RequestHandler {
   const options: Options = { ...defaultOptions, ...userOptions }
   const originalLabels = ['route', 'method', 'status']
-  options.customLabels = Array.from(new Set([...originalLabels, ...options.customLabels]))
+  const allLabels = Array.from(new Set([...originalLabels, ...options.customLabels]))
 
   const requestDuration = requestDurationGenerator(
-    options.customLabels,
+    allLabels,
     options.requestDurationBuckets,
     options.prefix
   )
   const requestCount = requestCountGenerator(
-    options.customLabels,
+    allLabels,
     options.prefix
   )
   const requestLength = requestLengthGenerator(
-    options.customLabels,
+    allLabels,
     options.requestLengthBuckets,
     options.prefix
   )
   const responseLength = responseLengthGenerator(
-    options.customLabels,
+    allLabels,
     options.responseLengthBuckets,
     options.prefix
   )
